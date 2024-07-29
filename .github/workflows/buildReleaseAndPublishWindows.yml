@@ -40,6 +40,7 @@ jobs:
         uses: ./.github/actions/setup-build
 
       - name: Build Python wheels and smoke test
+        shell: pwsh
         run: |
           cd $GITHUB_WORKSPACE
           ./build_tools/python_deploy/build_windows.ps1
