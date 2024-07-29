@@ -15,9 +15,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build_linux:
-    name: windows x86_64 Build
-    runs-on: windows-latest
+  build_x64_msvc:
+    name: windows x86_64 msvc Build
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: bash
     # Elevates permissions for `GITHUB_TOKEN`'s content scope (to allow this action to make a release)
     permissions:
       contents: write
@@ -41,8 +44,7 @@ jobs:
 
       - name: Build Python wheels and smoke test
         run: |
-          cd $GITHUB_WORKSPACE
-          .\build_tools\python_deploy\build_windows_ci.sh
+          ./build_tools/python_deploy/build_windows_ci.sh
 
       - name: Make assets available in dist
         run: |
