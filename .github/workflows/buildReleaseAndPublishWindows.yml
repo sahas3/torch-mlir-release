@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: llvm/torch-mlir
-          ref: refs/heads/main
+          ref: refs/heads/sahas3-patch-1
           submodules: 'true'
 
       - name: Setup workspace
