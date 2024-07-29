@@ -43,7 +43,7 @@ jobs:
         shell: pwsh
         run: |
           cd $GITHUB_WORKSPACE
-          ./build_tools/python_deploy/build_windows.ps1
+          .\build_tools\python_deploy\build_windows.ps1
 
       - name: Make assets available in dist
         run: |
