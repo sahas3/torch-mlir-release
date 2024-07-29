@@ -40,10 +40,9 @@ jobs:
         uses: ./.github/actions/setup-build
 
       - name: Build Python wheels and smoke test
-        shell: pwsh
         run: |
           cd $GITHUB_WORKSPACE
-          .\build_tools\python_deploy\build_windows.ps1
+          .\build_tools\python_deploy\build_windows_ci.sh
 
       - name: Make assets available in dist
         run: |
