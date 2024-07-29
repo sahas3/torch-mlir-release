@@ -42,9 +42,6 @@ jobs:
       - name: Build Python wheels and smoke test
         run: |
           cd $GITHUB_WORKSPACE
-          tm_package_version="$(printf '%(%Y%m%d)T.${{ github.run_number }}')"
-          echo "tm_package_version=${tm_package_version}" >> $GITHUB_ENV
-          printf "TORCH_MLIR_PYTHON_PACKAGE_VERSION=%s\n" ${tm_package_version} > ./torch_mlir_package_version
           ./build_tools/python_deploy/build_windows.ps1
 
       - name: Make assets available in dist
