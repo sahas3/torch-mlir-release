@@ -44,12 +44,7 @@ jobs:
 
       - name: Build Python wheels and smoke test
         run: |
-          ./build_tools/python_deploy/build_windows_ci.sh
-
-      - name: Make assets available in dist
-        run: |
-          mkdir dist
-          cp build_tools/python_deploy/wheelhouse/torch*.whl dist/
+          python setup.py bdist_wheel
 
       - name: Upload python wheels
         uses: actions/upload-artifact@v4
