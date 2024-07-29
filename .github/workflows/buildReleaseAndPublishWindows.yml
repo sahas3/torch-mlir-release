@@ -41,8 +41,8 @@ jobs:
 
       - name: Checkout working branch
         run: |
-          git fetch origin main --depth 1
-          git checkout origin/sahas3-patch-1
+          git fetch origin sahas3-patch-1
+          git checkout sahas3-patch-1
 
       - name: Setup workspace
         uses: ./.github/actions/setup-build
