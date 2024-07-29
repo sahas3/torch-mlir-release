@@ -36,8 +36,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: llvm/torch-mlir
-          ref: refs/heads/sahas3-patch-1
+          ref: refs/heads/main
           submodules: 'true'
+
+      - name: Checkout working branch
+        run: |
+          git fetch origin master --depth 1
+          git checkout origin/sahas3-patch-1
 
       - name: Setup workspace
         uses: ./.github/actions/setup-build
