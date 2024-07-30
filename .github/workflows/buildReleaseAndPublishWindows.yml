@@ -44,6 +44,8 @@ jobs:
 
       - name: "Configuring MSVC"
         uses: ilammy/msvc-dev-cmd@v1.13.0
+        with:
+           toolset: 14.36.32532
 
       - name: Build torch-mlir
         run: |
