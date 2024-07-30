@@ -39,12 +39,6 @@ jobs:
           ref: refs/heads/main
           submodules: 'true'
 
-      - name: Checkout working branch
-        run: |
-          git fetch origin sahas3-patch-1
-          git checkout sahas3-patch-1
-          git submodule update --init --progress
-
       - name: Setup workspace
         uses: ./.github/actions/setup-build
 
