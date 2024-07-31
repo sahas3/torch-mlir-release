@@ -60,7 +60,7 @@ jobs:
           tm_package_version="$(printf '%(%Y%m%d)T.${{ github.run_number }}')"
           echo "tm_package_version=${tm_package_version}" >> $GITHUB_ENV
           printf "TORCH_MLIR_PYTHON_PACKAGE_VERSION=%s\n" ${tm_package_version} > ./torch_mlir_package_version
-          TORCH_MLIR_PYTHON_PACKAGE_VERSION=${tm_package_version} TORCH_MLIR_CMAKE_BUILD_DIR="build_win" TORCH_MLIR_CMAKE_ALREADY_BUILT=1 python setup.py bdist_wheel
+          TORCH_MLIR_PYTHON_PACKAGE_VERSION=${tm_package_version} TORCH_MLIR_CMAKE_BUILD_DIR="build" TORCH_MLIR_CMAKE_ALREADY_BUILT=1 python setup.py bdist_wheel
 
       - name: Upload python wheels
         uses: actions/upload-artifact@v4
