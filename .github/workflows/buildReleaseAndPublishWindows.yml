@@ -1,4 +1,4 @@
-name: Build Release and Publish
+name: Build Release and Publish windows wheels
 
 on:
   workflow_dispatch:
@@ -15,9 +15,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build_linux:
-    name: Linux x86_64 Build
-    runs-on: ubuntu-latest
+  build_x64_msvc:
+    name: windows x86_64 msvc Build
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: bash
     # Elevates permissions for `GITHUB_TOKEN`'s content scope (to allow this action to make a release)
     permissions:
       contents: write
@@ -32,25 +35,26 @@ jobs:
       - name: Checkout torch-mlir
         uses: actions/checkout@v4
         with:
-          repository: llvm/torch-mlir
+          repository: sahas3/torch-mlir
           ref: refs/heads/main
           submodules: 'true'
 
       - name: Setup workspace
         uses: ./.github/actions/setup-build
 
+      - name: "Configuring MSVC"
+        uses: ilammy/msvc-dev-cmd@v1.13.0
+
+      - name: Build torch-mlir
+        run: |
+          ./build_tools/python_deploy/build_windows_ci.sh   
+
       - name: Build Python wheels and smoke test
         run: |
-          cd $GITHUB_WORKSPACE
           tm_package_version="$(printf '%(%Y%m%d)T.${{ github.run_number }}')"
           echo "tm_package_version=${tm_package_version}" >> $GITHUB_ENV
           printf "TORCH_MLIR_PYTHON_PACKAGE_VERSION=%s\n" ${tm_package_version} > ./torch_mlir_package_version
-          TM_PYTHON_VERSIONS=${{ matrix.py_version }} TM_PACKAGES=${{ matrix.package }} ./build_tools/python_deploy/build_linux_packages.sh
-
-      - name: Make assets available in dist
-        run: |
-          mkdir dist
-          cp build_tools/python_deploy/wheelhouse/torch*.whl dist/
+          TORCH_MLIR_PYTHON_PACKAGE_VERSION=${tm_package_version} TORCH_MLIR_CMAKE_BUILD_DIR="build" TORCH_MLIR_CMAKE_ALREADY_BUILT=1 python setup.py bdist_wheel
 
       - name: Upload python wheels
         uses: actions/upload-artifact@v4
