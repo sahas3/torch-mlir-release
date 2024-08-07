@@ -35,7 +35,7 @@ jobs:
       - name: Checkout torch-mlir
         uses: actions/checkout@v4
         with:
-          repository: sahas3/torch-mlir
+          repository: llvm/torch-mlir
           ref: refs/heads/main
           submodules: 'true'
 
