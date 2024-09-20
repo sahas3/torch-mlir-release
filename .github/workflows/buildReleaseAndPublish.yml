@@ -32,12 +32,18 @@ jobs:
       - name: Checkout torch-mlir
         uses: actions/checkout@v4
         with:
-          repository: llvm/torch-mlir
+          repository: sahas3/torch-mlir
           ref: refs/heads/main
           submodules: 'true'
 
       - name: Setup workspace
         uses: ./.github/actions/setup-build
+
+      - name: Checkout working branch
+        run: |
+          git fetch origin sahas3-patch-1
+          git checkout sahas3-patch-1
+          git submodule update --init --progress
 
       - name: Build Python wheels and smoke test
         run: |
