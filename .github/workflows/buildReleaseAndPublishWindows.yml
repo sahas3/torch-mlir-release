@@ -42,18 +42,12 @@ jobs:
       - name: Setup workspace
         uses: ./.github/actions/setup-build
 
-      - name: Checkout working branch
-        run: |
-          git fetch origin sahas3-patch-1
-          git checkout sahas3-patch-1
-          git submodule update --init --progress
-
       - name: "Configuring MSVC"
         uses: ilammy/msvc-dev-cmd@v1.13.0
 
       - name: Build torch-mlir
         run: |
-          ./build_tools/python_deploy/build_windows_ci.sh   
+          ./build_tools/python_deploy/build_windows.ps1   
 
       - name: Build Python wheels and smoke test
         run: |
