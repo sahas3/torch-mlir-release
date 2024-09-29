@@ -47,7 +47,10 @@ jobs:
 
       - name: Build torch-mlir
         run: |
-          ./build_tools/python_deploy/build_windows.ps1   
+          pip install delvewheel
+          TORCH_MLIR_ENABLE_STABLEHLO=OFF ./build_tools/python_deploy/build_windows_ci.sh   
+          delvewheel repair --add-path .\build\cmake_build\tools\torch-mlir\python_packages\torch_mlir\torch_mlir\_mlir_libs --add-dll TorchMLIRAggregateCAPI.dll --no-dll 'c10.dll;torch_python.dll;torch_cpu.dll' -v (get-item .\wheelhouse\torch_mlir*.whl).FullName
+
 
       - name: Build Python wheels and smoke test
         run: |
