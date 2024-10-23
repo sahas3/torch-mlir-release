@@ -23,8 +23,7 @@ jobs:
       run:
         shell: bash
     # Elevates permissions for `GITHUB_TOKEN`'s content scope (to allow this action to make a release)
-    permissions:
-      contents: write
+    permissions: write-all
     # Don't run this in everyone's forks.
     if: github.repository == 'llvm/torch-mlir-release'
     strategy:
