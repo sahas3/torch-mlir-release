@@ -53,6 +53,10 @@ jobs:
       - name: "Configuring MSVC"
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
 
+      - name: "Setup pytorch dependencies"
+        run: |
+          pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu    
+
       - name: Build torch-mlir
         run: |
           cd $GITHUB_WORKSPACE
