@@ -25,7 +25,7 @@ jobs:
     permissions:
       contents: write
     # Don't run this in everyone's forks.
-    if: github.repository == 'llvm/torch-mlir-release'
+    if: github.repository == 'sahas3/torch-mlir-release'
     strategy:
       matrix:
         package: [torch-mlir]
@@ -35,12 +35,18 @@ jobs:
       - name: Checkout torch-mlir
         uses: actions/checkout@v4
         with:
-          repository: llvm/torch-mlir
+          repository: sahas3/torch-mlir
           ref: refs/heads/main
           submodules: 'true'
 
       - name: Setup workspace
         uses: ./.github/actions/setup-build
+
+      - name: Checkout working branch
+        run: |
+          git fetch origin tosa-linalg-pipeline-4
+          git checkout tosa-linalg-pipeline-4
+          git submodule update --init --progress
 
       - name: "Configuring MSVC"
         uses: ilammy/msvc-dev-cmd@v1.13.0
