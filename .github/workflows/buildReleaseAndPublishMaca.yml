@@ -1,4 +1,4 @@
-name: Build Release and Publish windows wheels
+name: Build Release and Publish maca wheels
 
 on:
   workflow_dispatch:
@@ -40,17 +40,14 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: sahas3/torch-mlir
-          ref: refs/heads/tosa-linalg-pipeline-playground
+          ref: refs/heads/tosa-linalg-pipeline-5
           submodules: 'true'
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      
-      # You can test your matrix by printing the current Python version
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
+    
 
       - name: Setup workspace
         uses: ./.github/actions/setup-build
@@ -58,12 +55,12 @@ jobs:
           cache-enabled: 'true'
           torch-version: 'stable'
 
-      - name: Checkout working branch
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: "Setup pytorch dependencies"
         run: |
-          git fetch origin tosa-linalg-pipeline-playground
-          git checkout tosa-linalg-pipeline-playground
-          git submodule update --init --progress
-          python -m pip install https://download.pytorch.org/whl/cpu/torch-2.5.1-cp311-none-macosx_11_0_arm64.whl
+          pip install --no-cache-dir torch==2.5.1 torchvision --index-url https://download.pytorch.org/whl/cpu    
 
       - name: Put current date into a variable
         run: |
