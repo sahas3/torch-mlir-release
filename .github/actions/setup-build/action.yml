@@ -15,7 +15,7 @@ runs:
         python-version: '3.11'
 
     - name: Install prerequisites (Linux)
-      run: sudo apt-get install --yes ninja-build
+      run: sudo apt-get install --yes ninja-build ccache
       shell: bash
 
     - name: Install prerequisites (macOS)

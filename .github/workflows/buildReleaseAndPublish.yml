@@ -5,6 +5,7 @@ on:
   schedule:
   # Runs at 11:00 AM UTC, which is 3:00 AM PST (UTC-8)
    - cron: '0 11 * * *'
+  push:
 
 # Ensure that only a single job or workflow using the same
 # concurrency group will run at a time. This would cancel
@@ -18,6 +19,8 @@ jobs:
   build_linux:
     name: Linux x86_64 Build
     runs-on: ubuntu-latest
+    env:
+      CACHE_DIR: ${{ github.workspace }}/.container-cache
     # Elevates permissions for `GITHUB_TOKEN`'s content scope (to allow this action to make a release)
     permissions:
       contents: write
@@ -26,32 +29,68 @@ jobs:
     strategy:
       matrix:
         package: [torch-mlir]
-        py_version: [cp310-cp310, cp311-cp311, cp312-cp312]
+        py_version: [cp311-cp311]
+        python-version: ["3.11"]
 
     steps:
       - name: Checkout torch-mlir
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: sahas3/torch-mlir
-          ref: refs/heads/main
+          ref: refs/heads/tosa-linalg-pipeline-5
           submodules: 'true'
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
 
       - name: Setup workspace
         uses: ./.github/actions/setup-build
+        with:
+          cache-enabled: 'true'
+          torch-version: 'stable'
 
-      - name: Checkout working branch
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: "Setup pytorch dependencies"
         run: |
-          git fetch origin tosa-linalg-pipeline-4
-          git checkout tosa-linalg-pipeline-4
-          git submodule update --init --progress
+          pip install --no-cache-dir torch==2.5.1 torchvision --index-url https://download.pytorch.org/whl/cpu    
+
+      - name: Put current date into a variable
+        run: |
+          echo "NOW=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
+      - name: Enable cache
+        uses: actions/cache/restore@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        with:
+          path: ${{ env.CACHE_DIR }}
+          key: build-test-cpp-asserts-linux-${{ matrix.torch-version }}-v2-${{ github.sha }}
+          restore-keys: |
+            build-test-cpp-asserts-linux-${{ matrix.torch-version }}-v2-
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@53911442209d5c18de8a31615e0923161e435875 # v1.2.16
+        with:
+          key: ${{ github.job }}-${{ matrix.torch-version }}
+          save: ${{ needs.setup.outputs.write-caches == 1 }}
 
       - name: Build Python wheels and smoke test
         run: |
           cd $GITHUB_WORKSPACE
-          tm_package_version="$(printf '%(%Y%m%d)T.${{ github.run_number }}')"
+          tm_package_version="$(printf '${{ env.NOW }}.${{ github.run_number }}')"
           echo "tm_package_version=${tm_package_version}" >> $GITHUB_ENV
           printf "TORCH_MLIR_PYTHON_PACKAGE_VERSION=%s\n" ${tm_package_version} > ./torch_mlir_package_version
           TM_PYTHON_VERSIONS=${{ matrix.py_version }} TM_PACKAGES=${{ matrix.package }} TM_TORCH_VERSION=stable ./build_tools/python_deploy/build_linux_packages.sh
+
+
+      - name: Save cache
+        uses: actions/cache/save@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        if: ${{ !cancelled() }}
+        with:
+          path: ${{ env.CACHE_DIR }}
+          key: build-test-cpp-asserts-linux-${{ matrix.torch-version }}-v2-${{ github.sha }}
 
       - name: Make assets available in dist
         run: |
