@@ -1,0 +1,131 @@
+name: Build Release and Publish windows wheels
+
+on:
+  workflow_dispatch:
+  schedule:
+  # Runs at 11:00 AM UTC, which is 3:00 AM PST (UTC-8)
+   - cron: '0 11 * * *'
+  push:
+
+# Ensure that only a single job or workflow using the same
+# concurrency group will run at a time. This would cancel
+# any in-progress jobs in the same github workflow and github
+# ref (e.g. refs/heads/main or refs/pull/<pr_number>/merge).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_macos:
+    name: MacOS Build
+    runs-on: macos-latest
+    env:
+      CACHE_DIR: ${{ github.workspace }}/.container-cache
+    defaults:
+      run:
+        shell: bash
+    # Elevates permissions for `GITHUB_TOKEN`'s content scope (to allow this action to make a release)
+    permissions:
+      contents: write
+    # Don't run this in everyone's forks on schedule but allow to run via dispatch.
+    if: ${{ github.repository_owner == 'llvm' || github.event_name != 'schedule' }}
+    strategy:
+      matrix:
+        package: [torch-mlir]
+        py_version: [cp311-cp311]
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout torch-mlir
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: sahas3/torch-mlir
+          ref: refs/heads/tosa-linalg-pipeline-playground
+          submodules: 'true'
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      # You can test your matrix by printing the current Python version
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Setup workspace
+        uses: ./.github/actions/setup-build
+        with:
+          cache-enabled: 'true'
+          torch-version: 'stable'
+
+      - name: Checkout working branch
+        run: |
+          git fetch origin tosa-linalg-pipeline-playground
+          git checkout tosa-linalg-pipeline-playground
+          git submodule update --init --progress
+          python -m pip install https://download.pytorch.org/whl/cpu/torch-2.5.1-cp311-none-macosx_11_0_arm64.whl
+
+      - name: Put current date into a variable
+        run: |
+          echo "NOW=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
+      - name: Enable cache
+        uses: actions/cache/restore@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        with:
+          path: ${{ env.CACHE_DIR }}
+          key: build-test-cpp-asserts-macos-${{ matrix.torch-version }}-v2-${{ github.sha }}
+          restore-keys: |
+            build-test-cpp-asserts-macos-${{ matrix.torch-version }}-v2-
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@53911442209d5c18de8a31615e0923161e435875 # v1.2.16
+        with:
+          key: ${{ github.job }}-${{ matrix.torch-version }}
+          save: ${{ needs.setup.outputs.write-caches == 1 }}
+
+      - name: Build torch-mlir
+        run: |
+          cd $GITHUB_WORKSPACE
+          python -m pip install wheel
+          tm_package_version="$(printf '${{ env.NOW }}.${{ github.run_number }}')"
+          echo "tm_package_version=${tm_package_version}" >> $GITHUB_ENV
+          printf "TORCH_MLIR_PYTHON_PACKAGE_VERSION=%s\n" $tm_package_version > ./torch_mlir_package_version          
+          sudo ./build_tools/python_deploy/install_macos_deps.sh
+          export cache_dir="${{ env.CACHE_DIR }}"
+          packages=${{ matrix.package }} \
+          TORCH_MLIR_PYTHON_VERSIONS="3.11" \
+          ./build_tools/python_deploy/build_macos_packages.sh
+
+      - name: Save cache
+        uses: actions/cache/save@1bd1e32a3bdc45362d1e726936510720a7c30a57 # v4.2.0
+        if: ${{ !cancelled() }}
+        with:
+          path: ${{ env.CACHE_DIR }}
+          key: build-test-cpp-asserts-macos-${{ matrix.torch-version }}-v2-${{ github.sha }}
+
+
+      - name: Make assets available in dist
+        run: |
+          mkdir dist
+          cp build_tools/python_deploy/wheelhouse/torch*.whl dist/
+
+      - name: Upload python wheels
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          if-no-files-found: error
+          name: snapshot-${{ matrix.package }}-${{ matrix.py_version }}-${{ env.tm_package_version }}
+          path: dist
+
+      - name: Release python wheels
+        uses: ncipollo/release-action@cdcc88a9acf3ca41c16c37bb7d21b9ad48560d87 # v.1.15.0
+        with:
+          artifacts: dist/*.whl
+          token: "${{ secrets.GITHUB_TOKEN }}"
+          tag: "dev-wheels"
+          name: "dev-wheels"
+          body: "Automatic snapshot release of torch-mlir python wheels."
+          removeArtifacts: false
+          allowUpdates: true
+          replacesArtifacts: true
+          makeLatest: true
+
