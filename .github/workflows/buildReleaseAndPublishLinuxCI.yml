@@ -37,8 +37,8 @@ jobs:
       - name: Checkout torch-mlir
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          repository: sahas3/torch-mlir
-          ref: refs/heads/tosa-linalg-pipeline-5
+          repository: mathworks/torch-mlir
+          ref: refs/heads/mw_main
           submodules: 'true'
 
       - name: Set up Python ${{ matrix.python-version }}
