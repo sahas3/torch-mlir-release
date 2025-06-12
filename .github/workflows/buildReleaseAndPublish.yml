@@ -45,6 +45,7 @@ jobs:
           tm_package_version="$(printf '%(%Y%m%d)T.${{ github.run_number }}')"
           echo "tm_package_version=${tm_package_version}" >> $GITHUB_ENV
           printf "TORCH_MLIR_PYTHON_PACKAGE_VERSION=%s\n" ${tm_package_version} > ./torch_mlir_package_version
+          python -m pip install --upgrade pip
           TM_PYTHON_VERSIONS=${{ matrix.py_version }} TM_PACKAGES=${{ matrix.package }} ./build_tools/python_deploy/build_linux_packages.sh
 
       - name: Make assets available in dist
